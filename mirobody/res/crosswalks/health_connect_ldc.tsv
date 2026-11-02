@@ -1,0 +1,75 @@
+# Life Dashboard Companion webhook key -> androidx Health Connect Record class -> catalogue metric.
+#
+# Life Dashboard Companion (LDC, github.com/owen282000/life-dashboard-companion-app) reads Health
+# Connect on an Android phone and POSTs JSON to a receiver. Its keys are snake_case names it chose,
+# not androidx class names, so this file is the seam between its payload and health_connect.tsv.
+#
+# Source, read 2026-11-02:
+#   https://raw.githubusercontent.com/owen282000/life-dashboard-companion-app/main/docs/webhook.md
+#   34 record keys plus the daily_totals block; every key in that document has a row here.
+#
+# Columns:
+#   ldc_key     the payload key, verbatim
+#   ldc_field   the field inside a record, verbatim; `stages:<name>` is a sleep stage and `session`
+#               the sleep session itself; empty when the key is declined as a whole
+#   hc_class    the androidx Record class; where health_connect.tsv has the class the two must agree
+#   hc_field    the androidx field or constant; informative
+#   metric      the catalogue name (res/catalog/metrics.tsv); EMPTY IS A DECLINE and `reason` says why
+#   src_unit    the UCUM unit LDC states for the field. The TARGET unit is never written here: it is
+#               metrics.METRICS[metric].unit_ucum, so this table cannot disagree with the aggregator
+#   time        instant (`time`), interval (`start_time`/`end_time`), session (sleep) or day (daily_totals)
+#   gate        `reproductive` = decoded only when the caller passes accept_reproductive
+#   reason      the refusal code for a decline: no-metric
+#   note        the reasoning
+#
+# A decline is an explicit row, never an omission: the decoder counts it and does not guess a
+# neighbouring metric. An LDC key that is not in this file is refused as unmapped-key.
+ldc_key	ldc_field	hc_class	hc_field	metric	src_unit	time	gate	reason	note
+steps	count	StepsRecord	count	steps	{#}	interval			
+distance	meters	DistanceRecord	distance		m	interval		no-metric	the catalogue has no summed any-activity distance; dailyDistance keeps one value a day and would keep the last interval (health_connect.tsv DistanceRecord: LOINC 103208-5, no metric)
+active_calories	calories	ActiveCaloriesBurnedRecord	energy	activeCalories	kcal	interval			
+total_calories	calories	TotalCaloriesBurnedRecord	energy		kcal	interval		no-metric	dailyTotalCalories is a 24 h figure and this record is an arbitrary interval (health_connect.tsv marks the window unverified); the 24 h figure arrives as daily_totals.total_calories
+speed	meters_per_second	SpeedRecord	speed	speeds	m/s	instant			one object per sample; uuid is record#epoch-ms
+exercise	duration_seconds	ExerciseSessionRecord		workoutDuration	s	interval			the session container; the exercise type constant and name are not carried because the catalogue has no event vocabulary
+weight	kilograms	WeightRecord	weight	bodyMasss	kg	instant			
+height	meters	HeightRecord	height	heights	m	instant			
+body_temperature	celsius	BodyTemperatureRecord	temperature	bodyTemperatures	Cel	instant			
+body_fat	percentage	BodyFatRecord	percentage	bodyFatPercentages	%	instant			0 to 100 on both sides; no fraction rule applies
+lean_body_mass	kilograms	LeanBodyMassRecord	mass	bodyFatFreeWeight	kg	instant			
+bone_mass	kilograms	BoneMassRecord	mass	bodyBone	kg	instant			
+body_water_mass	kilograms	BodyWaterMassRecord	mass	bodyWaterMass	kg	instant			
+heart_rate	bpm	HeartRateRecord	beatsPerMinute	heartRates	/min	instant			one object per sample; uuid is record#epoch-ms
+resting_heart_rate	bpm	RestingHeartRateRecord	beatsPerMinute	restingHeartRates	/min	instant			
+heart_rate_variability	heart_rate_variability_millis	HeartRateVariabilityRmssdRecord	heartRateVariabilityMillis	hrvRMSSD	ms	instant			RMSSD; the iOS app sends SDNN under the same key, and a healthkit_ios payload is refused as wrong-source
+blood_pressure	systolic	BloodPressureRecord	systolic	systolicPressures	mm[Hg]	instant			split into two rows that share the record uuid and a panel id
+blood_pressure	diastolic	BloodPressureRecord	diastolic	diastolicPressures	mm[Hg]	instant			
+blood_glucose	mmol_per_liter	BloodGlucoseRecord	level	bloodGlucoseMoles	mmol/L	instant			
+oxygen_saturation	percentage	OxygenSaturationRecord	percentage	oxygenSaturations	%	instant			
+respiratory_rate	rate	RespiratoryRateRecord	rate	respiratoryRates	/min	instant			
+sleep	session	SleepSessionRecord		sleepAnalysis_InBed	ms	session			span is session_end_time minus duration_seconds to session_end_time; stage rows carry uuid#stage-start-ms
+sleep	stages:awake	SleepSessionRecord	STAGE_TYPE_AWAKE	sleepAnalysis_Awake	ms	interval			
+sleep	stages:awake_in_bed	SleepSessionRecord	STAGE_TYPE_AWAKE_IN_BED	sleepAnalysis_Awake	ms	interval			awake while in bed
+sleep	stages:sleeping	SleepSessionRecord	STAGE_TYPE_SLEEPING	sleepAnalysis_Asleep(Unspecified)	ms	interval			
+sleep	stages:light	SleepSessionRecord	STAGE_TYPE_LIGHT	sleepAnalysis_Asleep(Core)	ms	interval			interval metrics, not the daily* aggregates health_connect.tsv names for the same stages
+sleep	stages:deep	SleepSessionRecord	STAGE_TYPE_DEEP	sleepAnalysis_Asleep(Deep)	ms	interval			
+sleep	stages:rem	SleepSessionRecord	STAGE_TYPE_REM	sleepAnalysis_Asleep(REM)	ms	interval			
+sleep	stages:unknown	SleepSessionRecord	STAGE_TYPE_UNKNOWN			interval		no-metric	a stage of unknown kind is not a kind of sleep
+sleep	stages:out_of_bed	SleepSessionRecord	STAGE_TYPE_OUT_OF_BED			interval		no-metric	out of bed is not in the sleep vocabulary
+hydration	liters	HydrationRecord	volume	waters	L	interval			
+nutrition		NutritionRecord				interval		no-metric	38 optional nutrient fields; an intake mapping is a separate decision (health_connect.tsv: out of scope)
+mindfulness	duration_seconds	MindfulnessSessionRecord		mindfulnessMinutes	s	interval			health_connect.tsv leaves the metric empty only because LOINC has no code; the catalogue does carry mindfulnessMinutes
+basal_metabolic_rate	kilocalories_per_day	BasalMetabolicRateRecord	basalMetabolicRate		kcal/d	instant		no-metric	a rate in kcal/day; basalCalories is a cumulative total and basalMetabolicRate declares kcal, so neither has this unit
+vo2_max	vo2_ml_per_min_per_kg	Vo2MaxRecord	vo2MillilitersPerMinuteKilogram	vo2Maxs	mL/kg/min	instant			measurementMethod is not in the payload, so this stays unverified
+skin_temperature	delta_celsius	SkinTemperatureRecord	deltas	temperatureDelta	Cel	instant			a deviation from baseline, not a temperature; one object per sample; uuid is record#epoch-ms
+skin_temperature	baseline_celsius	SkinTemperatureRecord	baseline		Cel	instant		no-metric	the baseline is a per-record constant, not a reading, and the measurement location that would pick its LOINC is not sent
+menstruation_period		MenstruationPeriodRecord				interval	reproductive	no-metric	a period span with no value
+menstruation_flow		MenstruationFlowRecord				instant	reproductive	no-metric	an enum the catalogue stores with unit enum and no declared encoding
+intermenstrual_bleeding		IntermenstrualBleedingRecord				instant	reproductive	no-metric	an event with no value and no declared encoding
+ovulation_test		OvulationTestRecord				instant	reproductive	no-metric	no catalogue metric
+cervical_mucus		CervicalMucusRecord				instant	reproductive	no-metric	no catalogue metric
+sexual_activity		SexualActivityRecord				instant	reproductive	no-metric	no catalogue metric
+basal_body_temperature	celsius	BasalBodyTemperatureRecord	temperature	reproductiveBasalBodyTemperature	Cel	instant	reproductive		decoded only with accept_reproductive
+daily_totals	steps	StepsRecord	COUNT_TOTAL	steps	{#}	day			Health Connect's aggregate, deduplicated across sources: the vendor's own figure for the local day, so provider_daily
+daily_totals	distance_meters	DistanceRecord	DISTANCE_TOTAL		m	day		no-metric	see distance
+daily_totals	active_calories	ActiveCaloriesBurnedRecord	ACTIVE_CALORIES_TOTAL	activeCalories	kcal	day			
+daily_totals	total_calories	TotalCaloriesBurnedRecord	ENERGY_TOTAL	dailyTotalCalories	kcal	day			the 24 h figure the interval record cannot give; today's entry is a running total replaced by each newer sync

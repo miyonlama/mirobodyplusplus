@@ -32,7 +32,7 @@ from types import ModuleType
 
 from mirobody.kernel.connect import Coverage
 from mirobody.kernel.series import Fact
-from . import apple, garmin, open_wearables, oura, whoop
+from . import apple, garmin, health_connect_ldc, open_wearables, oura, whoop
 
 DECODERS: dict[str, ModuleType] = {
     "apple": apple,
@@ -43,6 +43,9 @@ DECODERS: dict[str, ModuleType] = {
     # between "connect eight vendors and a phone SDK" and "make the data mean
     # one thing": see open_wearables.py.
     "open_wearables": open_wearables,
+    # Also not a device vendor: the webhook of an Android app that reads Health
+    # Connect. One record type is `payload`, the whole POST body.
+    "health_connect_ldc": health_connect_ldc,
 }
 
 
@@ -92,5 +95,5 @@ def coverage_matrix() -> dict[str, Coverage]:
 
 __all__ = [
     "DECODERS", "decode", "data_types", "metrics_of", "coverage_of", "coverage_matrix",
-    "apple", "garmin", "whoop", "oura", "open_wearables",
+    "apple", "garmin", "whoop", "oura", "open_wearables", "health_connect_ldc",
 ]
