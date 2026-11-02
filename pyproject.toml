@@ -441,6 +441,7 @@ source_modules = [
     "mirobody.kernel.tools",
     "mirobody.units",
     "mirobody.kernel.decoders",
+    "mirobody.kernel.decoders.health_connect_ldc",
     "mirobody.value_scale",
     "mirobody.zh_fold",
     "mirobody.standardize",
@@ -501,6 +502,7 @@ source_modules = [
     "mirobody.kernel.tools",
     "mirobody.units",
     "mirobody.kernel.decoders",
+    "mirobody.kernel.decoders.health_connect_ldc",
     "mirobody.value_scale",
     "mirobody.zh_fold",
 ]
@@ -546,6 +548,7 @@ source_modules = [
     "mirobody.units",
     "mirobody.value_scale",
     "mirobody.kernel.decoders",
+    "mirobody.kernel.decoders.health_connect_ldc",
     "mirobody.zh_fold",
 ]
 forbidden_modules = [
@@ -631,6 +634,7 @@ source_modules = [
     "mirobody.kernel.tools",
     "mirobody.units",
     "mirobody.kernel.decoders",
+    "mirobody.kernel.decoders.health_connect_ldc",
     "mirobody.value_scale",
     "mirobody.zh_fold",
     "mirobody.collect",
